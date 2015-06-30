@@ -11,15 +11,8 @@
    }
    var services = {};
    w.domain = {
-      callService: function(serviceObject, done) {
-         if (_.isFunction(argService)) {
-            serviceObject();
-         }
-      },
       constructModel: function(avialableServices, functionResult, done) {
-
          var domainModelInstance = new functionResult();
-
          this.require({
             source: functionResult.prototype.init,
             target: domainModelInstance["init"],
@@ -32,14 +25,10 @@
       },
       getInputArguments: function(args) {
          var out = {};
-
          out.localServices = {};
-
          if (args.length > 0) {
-            out.source = args[0]; //_.isFunction(args[0]) ? args[0] : out.source;
+            out.source = args[0];
             out.target = args[0];
-
-
             if (_.isPlainObject(args[0])) {
                var opts = args[0];
                out.target = opts.target
@@ -67,9 +56,7 @@
                   }
                }
             }
-            // call(func, {locals}, calback)
             if (args.length === 3) {
-
                if (_.isPlainObject(args[1])) {
                   out.localServices = args[1];
                }
@@ -78,14 +65,9 @@
                }
             }
          }
-
-         out.target = out.target || function() {
-
-         }
+         out.target = out.target || function() {}
          out.source = out.source ? out.source : out.target;
-         out.callReady = out.callReady || function() {
-
-         };
+         out.callReady = out.callReady || function() {};
          return out;
 
       },
@@ -93,11 +75,8 @@
          services[name] = target;
       },
       require: function() {
-
-
          var data = this.getInputArguments(arguments);
          var localServices = data.localServices;
-
          var variables = _.isArray(data.source) ? data.source : getParamNames(data.source);
          var target = data.target;
          var callReady = data.callReady;
@@ -105,7 +84,6 @@
          var globalServices = services;
          var self = this;
          var resultPromise = new Promise(function(resolve, reject) {
-
             var args = [];
             var avialableServices = _.merge(localServices, globalServices);
             for (var i in variables) {
@@ -121,12 +99,8 @@
                args.push(avialableServices[variableName]);
             }
             var results = [];
-
-
             async.eachSeries(args, function(argService, next) {
-
                if (_.isFunction(argService)) {
-
                   self.require(argService, localServices).then(function(r) {
                      results.push(r)
                      next(null);
@@ -170,15 +144,12 @@
                         }
                      });
                   } else {
-
                      var isPromise = _.isFunction(functionResult["then"]) && _.isFunction(
                         functionResult["catch"]);
-
                      if (isPromise) {
                         functionResult.then(function(res) {
                            return resolve(res);
-                        });
-                        functionResult.catch(function(e) {
+                        }).catch(function(e) {
                            console.info(e);
                            return reject(e);
                         })
@@ -192,6 +163,40 @@
             });
          })
          return resultPromise;
+      },
+      isServiceRegistered: function(name) {
+         return services[name] !== undefined;
+      },
+      each: function(arr, cb) {
+         return new Promise(function(resolve, reject) {
+            var promises = [];
+            _.each(arr, function(v, k) {
+               promises.push(function(callback) {
+                  var cbRes;
+                  try {
+                     cbRes = cb(v, k);
+                  } catch (e) {
+                     return callback(e, null)
+                  }
+                  if (cbRes instanceof Promise) {
+                     cbRes.then(function(r) {
+                        callback(null, r);
+                     }).catch(function(e) {
+                        callback(e);
+                     })
+                  } else {
+                     callback(null, cbRes);
+                  }
+               });
+            });
+            async.series(promises, function(err, results) {
+               if (err) {
+                  return reject(err);
+               } else {
+                  return resolve(results);
+               }
+            })
+         });
       }
    }
 })(window)
