@@ -1,4 +1,5 @@
 (function() {
+   /*
    domain.register("$a", function() {
       return "this is a";
    });
@@ -27,23 +28,41 @@
 
 
    domain.require(['$test', '$other'],function($test, $other) {
-      console.log("**********", here)
+      console.log("**********")
    })
 
-   var a = [1, 2, 3];
-   domain.each(a, function(num) {
-      if (num === 2) {
-         return new Promise(function(resolve, reject) {
-            setTimeout(function() {
-               console.log(num)
-               resolve("hello")
-            }, 500)
-         })
-      } else {
-         console.log(num)
-         return num;
-      }
-   }).then(function(results) {
-      console.log(results)
+
+
+   domain.require(['$test'],function($test, $other) {
+      console.log("**********")
+   })*/
+
+domain.service("$pukka", function(){
+   return "pukka"
+})
+   domain.service("$something",function($params, $pukka) {
+      console.log("params are", $params, $pukka)
    })
+   domain.require(['$something'], {$params : { target : {"hello": 1} }},function($a) {
+      console.log("**********")
+   })
+
+   
+
+   // var a = [1, 2, 3];
+   // domain.each(a, function(num) {
+   //    if (num === 2) {
+   //       return new Promise(function(resolve, reject) {
+   //          setTimeout(function() {
+   //             console.log(num)
+   //             resolve("hello")
+   //          }, 500)
+   //       })
+   //    } else {
+   //       console.log(num)
+   //       return num;
+   //    }
+   // }).then(function(results) {
+   //    console.log(results)
+   // })
 })();
