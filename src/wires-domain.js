@@ -105,11 +105,13 @@
          var self = this;
          var resultPromise = new Promise(function(resolve, reject) {
             var args = [];
+
             var avialableServices = _.merge(localServices, globalServices);
             for (var i in variables) {
                var v = variables[i];
 
                var variableName = variables[i];
+
 
                if (!avialableServices[variableName]) {
                   console.error("Error while injecting variable '" + variableName + "' into function \n" +
@@ -132,11 +134,10 @@
                   var promised;
                   var currentArgs = [];
                   if (requiredArgs) {
-                     currentArgs = [requiredArgs, argService, localServices]
+                     currentArgs = [requiredArgs, localServices, argService ]
                   } else {
                      currentArgs = [argService, localServices]
                   }
-
                   self.require.apply(self, currentArgs).then(function(r) {
                      results.push(r)
                      next(null);

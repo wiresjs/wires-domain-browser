@@ -47,7 +47,7 @@ domain.service("$pukka", function(){
       console.log("**********")
    })
 
-   
+
 
    // var a = [1, 2, 3];
    // domain.each(a, function(num) {
