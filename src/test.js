@@ -1,4 +1,15 @@
 (function() {
+   domain.register("$a", function() {
+      return "this is a";
+   });
+
+   domain.register("$b", ["$a"], function(pukka) {
+      return "BBB " + pukka;
+   });
+   domain.require(function($b) {
+      console.log("b is", $b)
+   })
+
    domain.register("$test", function() {
       return "hello"
    });
@@ -14,8 +25,9 @@
    });
 
 
-   domain.require(['$test', '$other'], function($test, $other) {
-      console.log($test, $other)
+
+   domain.require(['$test', '$other'],function($test, $other) {
+      console.log("**********", here)
    })
 
    var a = [1, 2, 3];

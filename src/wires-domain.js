@@ -68,11 +68,24 @@
          out.target = out.target || function() {}
          out.source = out.source ? out.source : out.target;
          out.callReady = out.callReady || function() {};
+         console.log(out)
          return out;
 
       },
-      register: function(name, target) {
-         services[name] = target;
+      service : function(){
+         this.register.apply(this, arguments);
+      },
+      register: function(name, arg1, arg2) {
+         var localArgs = null;
+         var target = arg1;
+         if (_.isArray(arg1)) {
+            localArgs = arg1;
+            target = arg2;
+         }
+         services[name] = {
+            target: target,
+            args: localArgs
+         }
       },
       require: function() {
          var data = this.getInputArguments(arguments);
@@ -87,6 +100,8 @@
             var args = [];
             var avialableServices = _.merge(localServices, globalServices);
             for (var i in variables) {
+               var v = variables[i];
+
                var variableName = variables[i];
                if (!avialableServices[variableName]) {
                   console.error("Error while injecting variable '" + variableName + "' into function \n" +
@@ -96,18 +111,30 @@
                      message: "Service with name '" + variableName + "' was not found "
                   });
                }
+
                args.push(avialableServices[variableName]);
             }
             var results = [];
-            async.eachSeries(args, function(argService, next) {
+            async.eachSeries(args, function(item, next) {
+
+               var argService = item.target;
+               var requiredArgs = item.args;
                if (_.isFunction(argService)) {
-                  self.require(argService, localServices).then(function(r) {
+                  var promised;
+                  var currentArgs = [];
+                  if (requiredArgs) {
+                     currentArgs = [requiredArgs, argService, localServices]
+                  } else {
+                     currentArgs = [argService, localServices]
+                  }
+                  self.require.apply(self, currentArgs).then(function(r) {
                      results.push(r)
                      next(null);
                   }).catch(function(e) {
                      next(e);
                   });
                } else {
+
                   results.push(argService);
                   next();
                }
@@ -124,7 +151,7 @@
                try {
                   functionResult = target.apply(instance || results, results);
                } catch (e) {
-                  logger.info(e);
+                  console.error(e.stack || e);
                   return reject(e)
                }
 
