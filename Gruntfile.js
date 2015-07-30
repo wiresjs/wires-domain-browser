@@ -1,8 +1,6 @@
 module.exports = function(grunt) {
 
 	var targetFiles = [
-		'./bower_components/async/dist/async.min.js',
-		'./bower_components/lodash/lodash.min.js',
 		'./lib/promise.js',
 		'./src/wires-domain.js',
 	];
