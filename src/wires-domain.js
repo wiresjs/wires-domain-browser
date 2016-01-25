@@ -1,5 +1,9 @@
 (function(w) {
 
+   var isPromise = function(v) {
+      return v && _.isFunction(v.then) && _.isFunction(v.catch);
+   };
+
    function getParamNames(func) {
       var STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
       var ARGUMENT_NAMES = /([^\s,]+)/g;
@@ -45,10 +49,10 @@
                   } else {
                      out.source = _.isString(args[0]) ? [args[0]] : args[0]
                   }
-                  if ( _.isFunction(args[1]) ){
+                  if (_.isFunction(args[1])) {
                      out.target = args[1]
                   }
-                  if ( _.isFunction(args[2]) ){
+                  if (_.isFunction(args[2])) {
                      out.target = args[2]
                   }
                } else {
@@ -78,7 +82,7 @@
          return out;
 
       },
-      service : function(){
+      service: function() {
          this.register.apply(this, arguments);
       },
       register: function(name, arg1, arg2) {
@@ -93,18 +97,18 @@
             args: localArgs
          }
       },
-      requirePackage : function(name){
+      requirePackage: function(name) {
          var _packageServices = {}
 
-         return this.each(services, function(service, serviceName){
+         return this.each(services, function(service, serviceName) {
 
             var _package = serviceName.split(".")[0]
-            if ( _package === name){
-               return domain.require([serviceName], function(serviceInstance){
+            if (_package === name) {
+               return domain.require([serviceName], function(serviceInstance) {
                   _packageServices[serviceName] = serviceInstance
                })
             }
-         }).then(function(){
+         }).then(function() {
             return _packageServices;
          })
       },
@@ -140,14 +144,14 @@
             }
             var results = [];
 
-            return self.each(args, function(item){
+            return self.each(args, function(item) {
                var argService = item.target;
                var requiredArgs = item.args;
                if (_.isFunction(argService)) {
                   var promised;
                   var currentArgs = [];
                   if (requiredArgs) {
-                     currentArgs = [requiredArgs, localServices, argService ]
+                     currentArgs = [requiredArgs, localServices, argService]
                   } else {
                      currentArgs = [argService, localServices]
                   }
@@ -155,7 +159,7 @@
                } else {
                   return argService;
                }
-            }).then(function(results){
+            }).then(function(results) {
                delete self;
                return target.apply(instance || results, results);
             }).then(resolve).catch(reject);
@@ -165,40 +169,47 @@
       isServiceRegistered: function(name) {
          return services[name] !== undefined;
       },
-      each: function(args, cb) {
-         return new Promise(function(resolve, reject){
+      each: function(argv, cb) {
+         return new Promise(function(resolve, reject) {
             var callbacks = [];
             var results = [];
-            var isObject = _.isPlainObject(args);
+            var isObject = _.isPlainObject(argv);
             var index = -1;
-            var iterate = function(){
+            var iterate = function() {
                index++;
-               if ( index < _.size(args) ){
+               if (index < _.size(argv)) {
                   var key;
                   var value;
-                  if (isObject){
-                     key = _.keys(args)[index];
-                     value = args[key];
+                  if (isObject) {
+                     key = _.keys(argv)[index];
+                     value = argv[key];
                   } else {
                      key = index;
-                     value = args[index];
+                     value = argv[index];
                   }
-                  var res = cb.call(cb, value, key);
-                  if ( res instanceof Promise ){
-                     res.then(function(a){
-                        results.push(a)
+                  if (isPromise(value)) {
+                     value.then(function(data) {
+                        results.push(data);
                         iterate();
-                     }).catch(reject)
+                     }).catch(reject);
                   } else {
-                     results.push(res)
-                     iterate();
+                     var res = cb.call(cb, value, key);
+                     if (isPromise(res)) {
+                        res.then(function(a) {
+                           results.push(a);
+                           iterate();
+                        }).catch(reject);
+                     } else {
+                        results.push(res);
+                        iterate();
+                     }
                   }
                } else {
-                  return resolve(results)
+                  return resolve(results);
                }
-            }
+            };
             iterate();
-         })
+         });
       }
    }
 })(window)
